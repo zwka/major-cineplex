@@ -1,0 +1,23 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Database and reports
+major_cineplex.db
+reports/
+
+# Node/Next.js
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+.next/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.html
+*.log
+EOF
