@@ -1,72 +1,208 @@
-# Major Cineplex Seat Scraper & Web Dashboard
+# Major Cineplex Seat Dashboard
 
-An automated, high-performance data extraction pipeline and web visualization dashboard for Major Cineplex seat booking analytics.
+This app collects current Major Cineplex showtimes and seat availability. It saves the data in a local SQLite database and displays the latest data in a web dashboard.
 
----
+The app has two parts:
 
-## Features
+1. **Scraper**: Collects cinema, movie, showtime, and seat data from the Major Cineplex website.
+2. **Dashboard**: Shows the collected data in your web browser. You can filter the results by cinema or movie.
 
-* **English-Localized Crawl**: Automatically forces an English language session natively at the server level, ensuring all extracted movies, showtimes, and cinema names are saved in English.
-* **Concurrent Async Architecture**: Utilizes Playwright's `APIRequestContext` with custom semaphore controls to fetch and parse **all 193 cinemas** and all active daily showtimes in parallel under 50 seconds.
-* **Automated CSV Reports**: Generates a timestamped CSV dataset in the `reports/` folder at the end of every scraper run.
-* **Premium Web Dashboard**: A Next.js App Router visualization dashboard that queries the SQLite database directly, styled with glassmorphism, responsive mobile layouts, color-coded seat occupancy rates, sorting, and dynamic dropdown filter controls.
+You need an internet connection when you run the scraper.
 
----
+## Requirements
 
-## Tech Stack
-* **Scraper**: Python 3, `playwright`, `BeautifulSoup4`, `rich`, `tqdm`.
-* **Database**: `SQLite3` (`major_cineplex.db`).
-* **Dashboard**: Next.js 16 (App Router), `better-sqlite3`, Vanilla CSS.
+Install these tools before you start:
 
----
+- [Git](https://git-scm.com/downloads) - downloads the project from GitHub.
+- [Python 3.9 or newer](https://www.python.org/downloads/) - runs the scraper.
+- [Node.js 20.9 or newer](https://nodejs.org/en/download) - runs the web dashboard. The Node.js installer also installs `npm`.
 
-## Setup & Installation
+You can check whether the tools are installed by opening Terminal (macOS/Linux) or PowerShell (Windows) and running:
 
-### 1. Scraper Setup
-1. Create a virtual environment and install dependencies:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install playwright beautifulsoup4 tqdm rich
-   playwright install chromium
-   ```
-
-### 2. Dashboard Setup
-1. Install Node modules:
-   ```bash
-   cd dashboard
-   npm install
-   ```
-
----
-
-## How to Run
-
-### 1. Run the Scraper (Daily)
-To run a fresh crawl of all 193 cinemas, active showtimes, and seat maps:
 ```bash
+git --version
+python3 --version
+node --version
+npm --version
+```
+
+On Windows, use `python --version` if `python3 --version` does not work.
+
+## Installation
+
+Follow these steps in order.
+
+### 1. Download the project
+
+Open Terminal or PowerShell and run:
+
+```bash
+git clone https://github.com/zwka/major-cineplex.git
+cd major-cineplex
+```
+
+The `cd major-cineplex` command moves into the project folder. Run the remaining commands from this folder unless a step says otherwise.
+
+### 2. Create a Python environment
+
+A virtual environment keeps this project's Python packages separate from other Python projects on your computer.
+
+On macOS or Linux, run:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+On Windows PowerShell, run:
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+When the environment is active, your command prompt usually starts with `(venv)`.
+
+### 3. Install scraper packages
+
+With the virtual environment active, run:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install playwright beautifulsoup4 tqdm rich
+python -m playwright install chromium
+```
+
+The last command downloads the Chromium browser that the scraper uses.
+
+### 4. Install dashboard packages
+
+Run:
+
+```bash
+cd dashboard
+npm install
+cd ..
+```
+
+The dashboard packages are installed in `dashboard/node_modules`.
+
+## Run the app
+
+The scraper must run once before you start the dashboard. This creates the database that the dashboard reads.
+
+### 1. Collect the latest data
+
+Make sure you are in the main project folder and that the Python environment is active. Then run:
+
+```bash
+python scraper.py
+```
+
+The scraper checks the available cinemas and the current day's showtimes. It then checks seat availability and saves the results.
+
+When the command finishes, you should see these generated files:
+
+- `major_cineplex.db` - the local database used by the dashboard.
+- `reports/major_cineplex_<timestamp>.csv` - a CSV report from this run.
+
+The scraper can take some time because it checks many cinemas and showtimes. Leave the command running until the summary says the run is complete.
+
+### 2. Start the dashboard
+
+Open a second Terminal or PowerShell window. Move to the dashboard folder inside the cloned project:
+
+```bash
+cd major-cineplex/dashboard
+npm run dev
+```
+
+Keep this command running while you use the dashboard. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+The dashboard shows seat totals, occupancy rates, and showtimes. Use the cinema and movie lists to filter the results.
+
+## Update the data
+
+The dashboard displays the data stored in `major_cineplex.db`. To collect a newer snapshot:
+
+1. Open another Terminal or PowerShell window.
+2. Move to the main project folder.
+3. Activate the Python environment.
+4. Run the scraper.
+5. Refresh the dashboard in your browser.
+
+On macOS or Linux:
+
+```bash
+cd major-cineplex
 source venv/bin/activate
 python scraper.py
 ```
-This will automatically generate a timestamped CSV report under the `reports/` folder and populate `major_cineplex.db`.
 
-### 2. Export CSV Manually
-To extract the complete historical database content into a new CSV report at any time:
+On Windows PowerShell:
+
+```powershell
+cd major-cineplex
+.\venv\Scripts\Activate.ps1
+python scraper.py
+```
+
+You can keep the dashboard running while the scraper updates the database.
+
+## Export the database to CSV
+
+To create a CSV file containing all saved seat records, run this from the main project folder with the Python environment active:
+
 ```bash
-source venv/bin/activate
 python scraper.py --export
 ```
 
-### 3. Start the Web Dashboard
-To visualize live stats, top performing showtimes, and apply cinema/movie filters:
+The new file is saved in the `reports/` folder.
+
+## Troubleshooting
+
+### The dashboard says it cannot read the database
+
+Run `python scraper.py` from the main project folder first. The scraper must finish successfully before `major_cineplex.db` contains data.
+
+### Playwright says that Chromium is missing
+
+Activate the Python environment and run:
+
 ```bash
-cd dashboard
-npm run dev
+python -m playwright install chromium
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
----
+### `python3`, `node`, or `npm` is not recognised
 
-## Documentation
+Install the missing tool from the links in the [Requirements](#requirements) section, then close and reopen your Terminal or PowerShell window.
 
-* [Implementation Plan](docs/implementation_plan.md) — Detailed engineering architecture and technical decisions.
+### Port 3000 is already in use
+
+Start the dashboard on another port:
+
+```bash
+npm run dev -- --port 3001
+```
+
+Then open [http://localhost:3001](http://localhost:3001).
+
+## Project files
+
+```text
+scraper.py                 Collects data and creates CSV reports
+major_cineplex.db          Generated SQLite database
+reports/                   Generated CSV reports
+dashboard/                 Next.js web dashboard
+docs/implementation_plan.md  Technical implementation notes
+```
+
+## Development commands
+
+Run these commands from the `dashboard` folder:
+
+```bash
+npm run dev       # Start the dashboard in development mode
+npm run build     # Create a production build
+npm run start     # Start the production build
+```
